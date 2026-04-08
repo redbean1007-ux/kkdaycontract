@@ -218,47 +218,6 @@ function toggleEndDate() {
   }
 }
 
-let endDateCustom = false;
-
-function onSignDateChange() {
-  const sd = document.getElementById('sign_date').value;
-  if (!sd || endDateCustom) return;
-  const d = new Date(sd + 'T00:00:00');
-  d.setFullYear(d.getFullYear() + 1);
-  d.setDate(d.getDate() - 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  document.getElementById('end_date').value = y + '-' + m + '-' + day;
-}
-
-function toggleEndDate() {
-  endDateCustom = !endDateCustom;
-  const ed = document.getElementById('end_date');
-  const btn = document.getElementById('toggle_end_btn');
-  if (endDateCustom) {
-    ed.readOnly = false;
-    ed.style.background = '#fff';
-    ed.style.color = '#1a1a1a';
-    ed.style.cursor = 'default';
-    btn.textContent = '↩ 恢復自動';
-    btn.style.background = '#1a1a1a';
-    btn.style.color = '#fff';
-    btn.style.borderColor = '#1a1a1a';
-    ed.focus();
-  } else {
-    ed.readOnly = true;
-    ed.style.background = '#f0ece4';
-    ed.style.color = '#999';
-    ed.style.cursor = 'not-allowed';
-    btn.textContent = '✎ 自訂日期';
-    btn.style.background = '#f5f4f0';
-    btn.style.color = '#666';
-    btn.style.borderColor = '#ccc';
-    onSignDateChange();
-  }
-}
-
 document.querySelectorAll('.checkbox-item').forEach(label => {
   const cb = label.querySelector('input');
   function sync() { label.classList.toggle('checked', cb.checked); }
