@@ -40,6 +40,11 @@ input:focus { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(26,26,26,0.07); 
 .btn-generate:hover { background: #333; }
 .btn-generate:active { transform: scale(0.99); }
 .btn-generate:disabled { background: #888; cursor: not-allowed; }
+.error-banner { display:none; background:#fff0f0; border:1px solid #e24b4a; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.25rem; }
+.error-banner h4 { color:#c0392b; font-size:0.85rem; margin-bottom:0.5rem; }
+.error-banner ul { margin:0; padding-left:1.2rem; }
+.error-banner ul li { color:#c0392b; font-size:0.82rem; line-height:1.8; }
+input.field-error { border-color:#e24b4a !important; background:#fff8f8 !important; box-shadow: 0 0 0 3px rgba(226,75,74,0.12) !important; }
 .success-msg { display: none; margin-top: 1rem; padding: 0.9rem; background: #eaf3de; border-radius: 8px; color: #3b6d11; font-size: 0.85rem; text-align: center; }
 @media (max-width: 580px) {
   .field-grid, .service-grid { grid-template-columns: 1fr; }
@@ -56,6 +61,10 @@ input:focus { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(26,26,26,0.07); 
   </div>
 </header>
 <div class="container">
+  <div class="error-banner" id="error_banner">
+    <h4>⚠️ 以下欄位尚未填寫，請確認後再產生合約：</h4>
+    <ul id="error_list"></ul>
+  </div>
   <p class="required-note"><span>*</span> 為必填欄位</p>
 
   <!-- 供應商基本資料 -->
@@ -218,6 +227,17 @@ function toggleEndDate() {
   }
 }
 
+// 清除欄位錯誤狀態當使用者輸入
+document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"]').forEach(el => {
+  el.addEventListener('input', () => {
+    el.classList.remove('field-error');
+    // 如果所有錯誤都清了，隱藏 banner
+    if (document.querySelectorAll('input.field-error').length === 0) {
+      document.getElementById('error_banner').style.display = 'none';
+    }
+  });
+});
+
 document.querySelectorAll('.checkbox-item').forEach(label => {
   const cb = label.querySelector('input');
   function sync() { label.classList.toggle('checked', cb.checked); }
@@ -243,8 +263,31 @@ async function generatePDF() {
     ['account_name','戶名'],['bank_name','銀行名稱'],
     ['bank_code','銀行代碼'],['branch_name','分行名稱'],['branch_code','分行代碼'],
   ];
+
+  // 清除舊錯誤
+  document.querySelectorAll('input.field-error').forEach(el => el.classList.remove('field-error'));
+  const errorBanner = document.getElementById('error_banner');
+  const errorList = document.getElementById('error_list');
+  errorBanner.style.display = 'none';
+  errorList.innerHTML = '';
+
+  const errors = [];
   for (const [id, label] of required) {
-    if (!v(id)) { alert('請填寫「' + label + '」欄位'); document.getElementById(id)?.focus(); return; }
+    const el = document.getElementById(id);
+    if (!v(id)) {
+      errors.push(label);
+      if (el) el.classList.add('field-error');
+    }
+  }
+  if (errors.length > 0) {
+    errors.forEach(label => {
+      const li = document.createElement('li');
+      li.textContent = label;
+      errorList.appendChild(li);
+    });
+    errorBanner.style.display = 'block';
+    errorBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
   }
   const btn = document.getElementById('btn');
   btn.disabled = true; btn.textContent = '產生中，請稍候…';
@@ -439,9 +482,7 @@ async function renderPage(cmds) {
         ['銀行名稱', cmd.bank_name, '銀行代碼', cmd.bank_code],
         ['分行名稱', cmd.branch_name, '分行代碼', cmd.branch_code],
         ['SWIFT CODE','（依個案需要填寫）','收款行國別',''],
-        ['其他代碼
-□CNAPS □SKN CODE
-□BSB NUMBER □IBAN CODE','','','（依個案需要勾選及填寫）'],
+        ['其他代碼 □CNAPS □SKN CODE □BSB NUMBER □IBAN CODE','','','（依個案需要勾選及填寫）'],
       ];
       for(const row of rows){
         const cols=[c1,c2,c3,c4]; let xo=ml;
